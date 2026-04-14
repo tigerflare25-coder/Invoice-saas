@@ -128,14 +128,16 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Storage configuration for Cloudinary and WhiteNoise
+# --- STORAGE CONFIGURATION ---
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.StaticFilesStorage", # Using the simpler backend for stability
     },
 }
+# In settings.py, find the STORAGES section and change "staticfiles" to:
 
 # --- CLOUDINARY CONFIG ---
 CLOUDINARY_STORAGE = {
@@ -169,7 +171,7 @@ CASHFREE_BASE_URL = os.getenv('CASHFREE_BASE_URL', "https://sandbox.cashfree.com
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Try this instead of a hardcoded 1
-SITE_ID = 2
+
 
 # Add this at the very bottom of settings.py to help Allauth find the domain
 ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
