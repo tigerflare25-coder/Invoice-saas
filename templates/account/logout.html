@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Out | InvoiceFlow</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --primary: #6366f1;
+            --border: #334155;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: var(--card);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        h2 { margin-top: 0; font-size: 24px; }
+        .btn {
+            background: var(--primary);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+</head>
+<body>
+    <div class="card">
+        <h2>Are you sure you want to sign out?</h2>
+        <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn">Confirm Sign Out</button>
+        </form>
+    </div>
+</body>
+</html>

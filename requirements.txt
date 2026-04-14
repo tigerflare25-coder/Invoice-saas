@@ -1,0 +1,13 @@
+asgiref
+cloudinary
+dj-database-url
+django
+django-allauth
+django-cloudinary-storage
+django-rest-framework
+gunicorn
+pathlib
+python-dotenv
+requests
+sqlparse
+whitenoise

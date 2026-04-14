@@ -1,0 +1,103 @@
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>Login | InvoiceFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* This ensures the Django form matches the Tailwind UI */
+        .django-form p {
+            margin-bottom: 1rem;
+        }
+        .django-form label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+        .django-form input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            background-color: #f9fafb;
+            transition: all 0.2s;
+        }
+        .django-form input:focus {
+            outline: none;
+            border-color: #000;
+            background-color: #fff;
+            ring: 2px;
+            ring-color: #000;
+        }
+        .errorlist {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            list-style: none;
+            padding: 0;
+        }
+        .helptext {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">InvoiceFlow</h1>
+            <p class="text-gray-500 mt-2">Welcome back! Please enter your details.</p>
+        </div>
+
+        <div class="mb-6">
+            <a href="{% provider_login_url 'google' %}" class="flex items-center justify-center w-full border border-gray-300 py-3 rounded-xl hover:bg-gray-50 transition duration-200 shadow-sm group">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5 mr-3">
+                <span class="text-sm font-semibold text-gray-700">Continue with Google</span>
+            </a>
+        </div>
+
+        <div class="relative mb-8">
+            <div class="absolute inset-0 flex items-center">
+                <span class="w-full border-t border-gray-200"></span>
+            </div>
+            <div class="relative flex justify-center text-xs uppercase">
+                <span class="bg-white px-4 text-gray-400 font-medium">Or sign in with email</span>
+            </div>
+        </div>
+
+        <form method="POST" action="{% url 'account_login' %}" class="django-form">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                {{ form.non_field_errors }}
+            {% endif %}
+
+            <div class="space-y-1">
+                {{ form.as_p }}
+            </div>
+
+            <div class="flex items-center justify-between mt-2 mb-6">
+                <a href="{% url 'account_reset_password' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                    Forgot password?
+                </a>
+            </div>
+
+            <button type="submit" class="w-full bg-black text-white font-bold py-4 rounded-xl hover:bg-gray-800 transition-all duration-200 transform active:scale-95 shadow-lg">
+                Sign In
+            </button>
+        </form>
+
+        <p class="mt-8 text-center text-sm text-gray-600">
+            Don't have an account? 
+            <a href="{% url 'account_signup' %}" class="font-bold text-black hover:underline transition">Create one for free</a>
+        </p>
+    </div>
+
+</body>
+</html>
