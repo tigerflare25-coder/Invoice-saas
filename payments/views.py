@@ -44,9 +44,16 @@ def create_order(request):
             "return_url": f"{domain}/payments/success/?user_id={request.user.id}"
         }
     }
-
     response = requests.post(url, json=data, headers=headers)
-    return JsonResponse(response.json())
+    res_data = response.json()
+
+    # DEBUG: Check Render logs for this output!
+    print(f"DEBUG: Cashfree Status: {response.status_code}")
+    print(f"DEBUG: Cashfree Body: {res_data}")
+
+    return JsonResponse(res_data)
+
+  
 
 @login_required
 def payment_success(request):
