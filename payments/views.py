@@ -57,16 +57,7 @@ def create_order(request):
 
 @login_required
 def payment_success(request):
-    user_id = request.GET.get("user_id")
     
-    # Security: Ensure the person clicking success is actually the user being upgraded
-    if str(request.user.id) != str(user_id):
-        return redirect('dashboard')
-
-    if user_id:
-        user = get_object_or_404(User, id=user_id)
-        user.is_premium = True
-        user.save()
 
     return render(request, "payments/success.html")
 
