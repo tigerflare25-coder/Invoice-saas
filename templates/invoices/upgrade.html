@@ -71,16 +71,28 @@
 
 <script>
 async function pay(plan) {
-    const res = await fetch(`/payments/create-order/?plan=${plan}`);
-    const data = await res.json();
-    
-    // Using your Cashfree sandbox mode as requested
-    const cashfree = Cashfree({ mode: "sandbox" });
+    try {
+        // Added leading and trailing slashes for Django URL consistency
+        const res = await fetch(`/payments/create-order/?plan=${plan}`);
+        const data = await res.json();
+        
+        console.log("Order Data:", data); // Check your browser console to see this!
 
-    cashfree.checkout({
-        paymentSessionId: data.payment_session_id,
-        redirectTarget: "_self"
-    });
+        if (!data.payment_session_id) {
+            alert("Error: " + (data.message || "Could not create order session."));
+            return;
+        }
+
+        const cashfree = Cashfree({ mode: "sandbox" });
+
+        cashfree.checkout({
+            paymentSessionId: data.payment_session_id,
+            redirectTarget: "_self"
+        });
+    } catch (error) {
+        console.error("Payment Error:", error);
+        alert("Something went wrong. Please check the console.");
+    }
 }
 </script>
 </body>
