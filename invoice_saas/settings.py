@@ -15,7 +15,15 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-local-development-k
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # Allow local development and common deployment domains
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.railway.app', '.render.com']
+ALLOWED_HOSTS = [
+    'invoice-flow-drpu.onrender.com', 
+    '127.0.0.1', 
+    'localhost', 
+    '.render.com'
+]
+CSRF_TRUSTED_ORIGINS = [
+    'https://invoice-flow-drpu.onrender.com',
+]
 
 # --- APPLICATION DEFINITION ---
 INSTALLED_APPS = [
