@@ -57,9 +57,19 @@ def create_order(request):
 
 @login_required
 def payment_success(request):
+    # This comes from the return_url you set in create_order
+    user_id = request.GET.get("user_id") 
     
-
-    return render(request, "payments/success.html")
+    # Optional: Fetch the user and check if they are already premium
+    # This is a quick way to verify if the webhook already finished
+    user = get_object_or_404(User, id=request.user.id)
+    
+    if user.is_premium:
+        return render(request, "payments/success.html")
+    
+    # If they aren't premium yet (maybe webhook is slow), 
+    # you could just show a "Processing" page or redirect to dashboard
+    return redirect('dashboard')
 
 @csrf_exempt
 def webhook(request):
