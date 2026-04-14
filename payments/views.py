@@ -15,18 +15,21 @@ from django.conf import settings
 
 @login_required
 def create_order(request):
-    order_id = f"ORDER_{uuid.uuid4().hex[:8]}" # Cleaner order IDs
+    order_id = f"ORDER_{uuid.uuid4().hex[:8]}"
     url = f"{settings.CASHFREE_BASE_URL}/orders"
 
     headers = {
         "x-client-id": settings.CASHFREE_APP_ID,
         "x-client-secret": settings.CASHFREE_SECRET,
-        "x-api-version": "2023-08-01", # Updated API version
+        "x-api-version": "2023-08-01",
         "Content-Type": "application/json"
     }
     
     plan = request.GET.get("plan")
     amount = 2149 if plan == "yearly" else 249
+
+    # Dynamic domain for Render
+    domain = request.build_absolute_uri('/')[:-1]
 
     data = {
         "order_id": order_id,
@@ -35,11 +38,10 @@ def create_order(request):
         "customer_details": {
             "customer_id": str(request.user.id),
             "customer_email": request.user.email,
-            "customer_phone": "9999999999" # In production, pull this from user profile
+            "customer_phone": getattr(request.user, 'phone', '9000000000') 
         },
         "order_meta": {
-            # Directing back to our dedicated success view
-            "return_url": f"http://127.0.0.1:8000/payments/success/?user_id={request.user.id}"
+            "return_url": f"{domain}/payments/success/?user_id={request.user.id}"
         }
     }
 
