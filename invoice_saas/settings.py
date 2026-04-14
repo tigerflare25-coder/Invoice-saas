@@ -167,3 +167,10 @@ CASHFREE_BASE_URL = os.getenv('CASHFREE_BASE_URL', "https://sandbox.cashfree.com
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Try this instead of a hardcoded 1
+SITE_ID = 1
+
+# Add this at the very bottom of settings.py to help Allauth find the domain
+ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
