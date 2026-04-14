@@ -71,21 +71,35 @@ def payment_success(request):
     # you could just show a "Processing" page or redirect to dashboard
     return redirect('dashboard')
 
+from datetime import timedelta
+from django.utils import timezone
+
 @csrf_exempt
 def webhook(request):
     try:
         data = json.loads(request.body)
-        # Cashfree sends several webhook types, check for success
+        # Check for the event you selected in the Cashfree Dashboard
         if data.get("type") == "PAYMENT_SUCCESS_WEBHOOK":
-            # Accessing nested dictionary safe-guarded
-            order_details = data.get("data", {}).get("customer_details", {})
-            user_id = order_details.get("customer_id")
+            payment_data = data.get("data", {})
+            order_details = payment_data.get("order", {})
+            customer_details = payment_data.get("customer_details", {})
             
+            user_id = customer_details.get("customer_id")
+            amount = float(order_details.get("order_amount", 0))
+
             if user_id:
                 user = User.objects.get(id=user_id)
                 user.is_premium = True
+                
+                # Logic: Set expiry based on amount
+                if amount >= 2000: # Yearly Plan (₹2149)
+                    user.premium_expiry = timezone.now() + timedelta(days=365)
+                else: # Monthly Plan (₹249)
+                    user.premium_expiry = timezone.now() + timedelta(days=30)
+                
                 user.save()
                 return JsonResponse({"status": "success"}, status=200)
+                
     except Exception as e:
         print(f"Webhook Error: {e}")
         
