@@ -65,15 +65,20 @@ def payment_success(request):
 
 @csrf_exempt
 def webhook(request):
-    # Webhooks are the "SaaS standard" for reliability
     try:
         data = json.loads(request.body)
+        # Cashfree sends several webhook types, check for success
         if data.get("type") == "PAYMENT_SUCCESS_WEBHOOK":
-            user_id = data["data"]["customer_details"]["customer_id"]
-            user = User.objects.get(id=user_id)
-            user.is_premium = True
-            user.save()
+            # Accessing nested dictionary safe-guarded
+            order_details = data.get("data", {}).get("customer_details", {})
+            user_id = order_details.get("customer_id")
+            
+            if user_id:
+                user = User.objects.get(id=user_id)
+                user.is_premium = True
+                user.save()
+                return JsonResponse({"status": "success"}, status=200)
     except Exception as e:
         print(f"Webhook Error: {e}")
         
-    return JsonResponse({"status": "received"})
+    return JsonResponse({"status": "received"}, status=200)
