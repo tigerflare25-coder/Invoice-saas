@@ -1,6 +1,8 @@
 import requests
 from io import BytesIO
 from decimal import Decimal
+from django.utils import timezone
+from accounts import models
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -11,11 +13,15 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
+from django.contrib.auth import get_user_model
+
 
 from .models import Invoice, InvoiceItem
 
 @login_required
 def dashboard(request):
+
+    request.user.check_premium_status()
     # Handle Logo Upload
     if request.method == "POST" and request.FILES.get("logo"):
         if request.user.is_premium:
