@@ -498,7 +498,9 @@
                 <div class="t2">Unlimited invoices, custom branding, and priority support.</div>
             </div>
         </div>
-        <a href="#" class="upgrade-btn">Upgrade to Pro →</a>
+        <a href="/upgrade/" class="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-600 transition">
+                            Upgrade to pro
+                        </a>
     </div>
     {% endif %}
 
@@ -533,7 +535,9 @@
             <div class="stat-label">Membership</div>
             <div class="stat-value">{% if user.is_premium %}Pro{% else %}Free{% endif %}</div>
             <div class="stat-sub">
-                {% if user.is_premium %}All features unlocked{% else %}<a href="#">Upgrade now →</a>{% endif %}
+                {% if user.is_premium %}All features unlocked{% else %}<a href="/upgrade/" class="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-600 transition">
+                            Unlock Now
+                        </a>{% endif %}
             </div>
         </div>
         <div class="stat-card c-purple">
