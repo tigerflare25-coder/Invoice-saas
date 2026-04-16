@@ -1,15 +1,16 @@
 {% load static %}
+
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard | InvoiceFlow</title>
 
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-/* ===== RESET ===== */
 *{box-sizing:border-box;margin:0;padding:0}
 
 :root{
@@ -19,12 +20,11 @@
 --text:#111;
 --muted:#6b6a67;
 --indigo:#4f46e5;
+--red:#dc2626;
+--green:#059669;
 }
 
-body{
-font-family:'DM Sans',sans-serif;
-background:var(--bg);
-}
+body{font-family:'DM Sans',sans-serif;background:var(--bg)}
 
 /* NAV */
 .nav{
@@ -47,7 +47,30 @@ font-size:13px;
 font-weight:600;
 }
 
-/* STICKY UPGRADE BAR */
+.btn.disabled{
+background:#ccc;
+pointer-events:none;
+cursor:not-allowed;
+}
+
+/* PROFILE ALERT */
+.profile-alert{
+background:#fff7ed;
+border:1px solid #fed7aa;
+color:#9a3412;
+padding:14px;
+border-radius:10px;
+margin-bottom:16px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:10px;
+flex-wrap:wrap;
+}
+
+.profile-alert strong{color:#7c2d12}
+
+/* UPGRADE BAR */
 .upgrade-bar{
 background:#111;color:#fff;
 padding:10px;text-align:center;font-size:13px;
@@ -87,26 +110,8 @@ th{background:#f9f8f6;text-align:left;font-size:11px;color:#777}
 
 .actions{text-align:right}
 
-/* BUTTONS */
-.btn-sm{
-padding:6px 10px;
-font-size:12px;
-border-radius:6px;
-text-decoration:none;
-border:1px solid #ddd;
-}
-
-.btn-upgrade{
-background:#fff7ed;
-border-color:#fed7aa;
-color:#ea580c;
-margin-left:6px;
-}
-
 /* EMPTY */
-.empty{
-padding:40px;text-align:center;
-}
+.empty{padding:40px;text-align:center}
 
 /* MOBILE */
 @media(max-width:600px){
@@ -114,21 +119,55 @@ padding:40px;text-align:center;
 .hide-sm{display:none}
 }
 </style>
+
 </head>
 
 <body>
 
 <!-- NAV -->
+
 <div class="nav">
 <div class="logo">Invoice<span>Flow</span></div>
 
-<div>
-<a href="/create/" class="btn">New Invoice</a>
+<div style="display:flex;gap:10px;align-items:center;">
+
+<a href="{% url 'edit_profile' %}" class="btn" style="background:#111;">
+Settings
+</a>
+
+<!-- Disable if not ready -->
+
+{% if not user.company_name %} <a class="btn disabled">New Invoice</a>
+{% else %} <a href="/create/" class="btn">New Invoice</a>
+{% endif %}
+
 </div>
 </div>
 
-<!-- STICKY UPGRADE BAR -->
+<!-- PROFILE SETUP ALERT -->
+
+{% if not user.company_name %}
+
+<div class="main">
+<div class="profile-alert">
+
+<div>
+<strong>Complete your business profile</strong><br>
+Add your company name & address before creating invoices.
+</div>
+
+<a href="{% url 'edit_profile' %}" class="btn">
+Complete Setup
+</a>
+
+</div>
+</div>
+{% endif %}
+
+<!-- UPGRADE BAR -->
+
 {% if not user.is_premium %}
+
 <div class="upgrade-bar">
 🚀 Remove watermark + unlock templates →
 <a href="/upgrade/" style="color:#60a5fa;font-weight:700;">Upgrade</a>
@@ -136,9 +175,11 @@ padding:40px;text-align:center;
 {% endif %}
 
 <!-- MAIN -->
+
 <div class="main">
 
 <!-- STATS -->
+
 <div class="stats">
 
 <div class="card">
@@ -149,17 +190,12 @@ padding:40px;text-align:center;
 <div class="card">
 <div>Total Revenue</div>
 <div class="big">₹{{ total_amount|default:"0" }}</div>
-<div style="font-size:12px;color:#777;margin-top:4px;">
-{% if not user.is_premium %}
-Upgrade to unlock branding →
-<a href="/upgrade/">Upgrade</a>
-{% endif %}
-</div>
 </div>
 
 </div>
 
 <!-- TABLE -->
+
 <div class="table">
 
 <table>
@@ -168,7 +204,6 @@ Upgrade to unlock branding →
 <th>Client</th>
 <th class="hide-sm">Amount</th>
 <th class="hide-sm">Date</th>
-<th class="hide-sm">Template</th>
 <th>Actions</th>
 </tr>
 </thead>
@@ -176,6 +211,7 @@ Upgrade to unlock branding →
 <tbody>
 
 {% for invoice in invoices %}
+
 <tr>
 
 <td>
@@ -191,29 +227,8 @@ Upgrade to unlock branding →
 {{ invoice.created_at|date:"d M Y" }}
 </td>
 
-<td class="hide-sm">
-{% if user.is_premium %}
-Modern
-{% else %}
-Basic
-<a href="/upgrade/" style="font-size:11px;margin-left:6px;">Unlock</a>
-{% endif %}
-</td>
-
 <td class="actions">
-
-<a href="/invoice/{{ invoice.id }}/download/" class="btn-sm">
-{% if user.is_premium %}
-PDF
-{% else %}
-PDF (Free)
-{% endif %}
-</a>
-
-{% if not user.is_premium %}
-<a href="/upgrade/" class="btn-sm btn-upgrade">Upgrade</a>
-{% endif %}
-
+<a href="/invoice/{{ invoice.id }}/download/" class="btn-sm">PDF</a>
 </td>
 
 </tr>
@@ -221,23 +236,24 @@ PDF (Free)
 {% empty %}
 
 <tr>
-<td colspan="5">
+<td colspan="4">
 
 <div class="empty">
 <h3>No invoices yet</h3>
-<p style="margin:10px 0;">
-Create your first invoice in 30 seconds.
-</p>
+<p>Create your first invoice in seconds.</p>
 
-{% if not user.is_premium %}
-<p style="font-size:12px;color:#6366f1;">
-Upgrade to unlock premium templates & branding
+{% if not user.company_name %}
+
+<p style="color:#dc2626;font-size:13px;margin-top:6px;">
+⚠ Complete your profile first
 </p>
 {% endif %}
 
 <br>
 
-<a href="/create/" class="btn">Create Invoice</a>
+{% if user.company_name %} <a href="/create/" class="btn">Create Invoice</a>
+{% else %} <a href="{% url 'edit_profile' %}" class="btn">Complete Setup</a>
+{% endif %}
 
 </div>
 
@@ -255,3 +271,4 @@ Upgrade to unlock premium templates & branding
 
 </body>
 </html>
+
