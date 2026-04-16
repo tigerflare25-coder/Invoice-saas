@@ -56,6 +56,10 @@ def dashboard(request):
 
 @login_required
 def create_invoice(request):
+
+    if not request.user.is_premium:
+        if request.user.invoice_set.count() >= 3:
+            return redirect('upgrade')
     if request.method == 'POST':
         client_name = request.POST.get('client_name', '').strip()
         template = request.POST.get('template', 'minimal')
