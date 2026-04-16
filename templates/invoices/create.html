@@ -186,8 +186,14 @@ input, select {
         {% if not user.is_premium %}<span class="badge">PRO</span>{% endif %}
     </label>
 
-    <input type="number" name="tax_percentage"
-        {% if not user.is_premium %}readonly value="0"{% endif %}>
+    <input 
+    type="number" 
+    name="tax_percentage"
+    min="0"
+    step="0.01"
+    value="0"
+    {% if not user.is_premium %}readonly class="readonly-field"{% endif %}
+>
 </div>
 
 <!-- ITEMS -->
