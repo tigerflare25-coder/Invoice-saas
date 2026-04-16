@@ -178,7 +178,12 @@ def draw_items(p, items, width, height):
 def draw_summary(p, invoice, subtotal, y, width):
     y -= 20
 
+    # ─────────────────────────────
+    # 💰 SUMMARY (RIGHT SIDE)
+    # ─────────────────────────────
     p.setFont("Helvetica", 10)
+    p.setFillColor(colors.black)
+
     p.drawString(350, y, "Subtotal:")
     p.drawRightString(width - 50, y, f"INR {subtotal:.2f}")
 
@@ -187,27 +192,62 @@ def draw_summary(p, invoice, subtotal, y, width):
     if invoice.tax_percentage:
         tax = (subtotal * Decimal(str(invoice.tax_percentage))) / 100
         total += tax
-        y -= 20
+        y -= 18
+
+        p.setFillColor(colors.grey)
         p.drawString(350, y, f"Tax ({invoice.tax_percentage}%):")
         p.drawRightString(width - 50, y, f"INR {tax:.2f}")
 
-    y -= 30
+    y -= 25
+
+    # TOTAL (highlight)
+    p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 14)
-    p.drawString(350, y, "TOTAL:")
+    p.drawString(350, y, "TOTAL")
     p.drawRightString(width - 50, y, f"INR {total:.2f}")
 
-    # Payment link
+    # ─────────────────────────────
+    # 💳 PAYMENT SECTION (LEFT SIDE)
+    # ─────────────────────────────
     payment_link = invoice.payment_link or invoice.user.payment_link
 
     if payment_link:
-        y -= 40
-        p.setFillColor(colors.blue)
+        y -= 70
 
-        p.setFillColor(colors.blue)
-        p.drawString(40, y, "Pay Now:")
-        p.linkURL(payment_link, (100, y - 2, 400, y + 12), relative=0)
+        # Card background
+        p.setFillColor(colors.HexColor("#F1F5F9"))
+        p.roundRect(40, y, width - 80, 60, 10, fill=1, stroke=0)
+
+        # Title
+        p.setFillColor(colors.black)
+        p.setFont("Helvetica-Bold", 11)
+        p.drawString(55, y + 38, "Payment")
+
+        # Subtitle
         p.setFont("Helvetica", 9)
-        p.drawString(100, y, payment_link[:50])
+        p.setFillColor(colors.grey)
+        p.drawString(55, y + 24, "Secure payment via link")
+
+        # Button
+        p.setFillColor(colors.HexColor("#2563EB"))
+        p.roundRect(width - 170, y + 18, 110, 24, 6, fill=1, stroke=0)
+
+        # Button text
+        p.setFillColor(colors.white)
+        p.setFont("Helvetica-Bold", 10)
+        p.drawCentredString(width - 115, y + 25, "Pay Now")
+
+        # Clickable area
+        p.linkURL(payment_link, (width - 170, y + 18, width - 60, y + 42), relative=0)
+
+        # Short link preview (clean trust signal)
+        short_link = payment_link.replace("https://", "").replace("http://", "")
+        if len(short_link) > 35:
+            short_link = short_link[:35] + "..."
+
+        p.setFont("Helvetica", 7)
+        p.setFillColor(colors.grey)
+        p.drawString(55, y + 10, short_link)
       
 
 
