@@ -55,41 +55,57 @@ def dashboard(request):
 def create_invoice(request):
     if request.method == 'POST':
 
-        # ✅ SAFE TAX
-        tax_input = request.POST.get('tax_percentage')
-
-       if request.user.is_premium:
-           try:
-               tax_val = float(tax_input) if tax_input not in [None, ""] else 0
-           except ValueError:
-                tax_val = 0
-       else:
-           tax_val = 0
-
+        # ===============================
+        # BASIC FIELDS
+        # ===============================
+        client_name = request.POST.get('client_name', '').strip()
         template = request.POST.get('template', 'minimal')
-        payment_link = request.POST.get('payment_link')
+        payment_link = request.POST.get('payment_link', '').strip() or None
 
-        # ✅ CREATE INVOICE
+        # Optional (if you add later)
+        due_date = request.POST.get('due_date') or None
+
+        # ===============================
+        # SAFE TAX HANDLING
+        # ===============================
+        tax_input = request.POST.get('tax_percentage', '').strip()
+        tax_val = 0
+
+        if request.user.is_premium and tax_input:
+            try:
+                tax_val = float(tax_input)
+                if tax_val < 0:
+                    tax_val = 0
+            except ValueError:
+                tax_val = 0
+
+        # ===============================
+        # CREATE INVOICE
+        # ===============================
         invoice = Invoice.objects.create(
             user=request.user,
-            client_name=request.POST.get('client_name'),
+            client_name=client_name or "Unnamed Client",
             tax_percentage=tax_val,
             template=template,
-            payment_link=payment_link
+            payment_link=payment_link,
+            due_date=due_date
         )
 
+        # ===============================
+        # ITEMS PROCESSING (SAFE)
+        # ===============================
         descriptions = request.POST.getlist('desc[]')
         quantities = request.POST.getlist('qty[]')
         prices = request.POST.getlist('price[]')
 
-        # ✅ SAFE LOOP
         for i in range(len(descriptions)):
             desc = descriptions[i].strip()
 
+            # skip empty rows
             if not desc:
-                continue  # skip empty rows
+                continue
 
-            # SAFE quantity
+            # SAFE QUANTITY
             try:
                 qty = int(quantities[i])
                 if qty <= 0:
@@ -97,7 +113,7 @@ def create_invoice(request):
             except (ValueError, IndexError):
                 qty = 1
 
-            # SAFE price
+            # SAFE PRICE
             try:
                 price = float(prices[i])
                 if price < 0:
@@ -112,10 +128,12 @@ def create_invoice(request):
                 unit_price=price
             )
 
+        # ===============================
+        # REDIRECT
+        # ===============================
         return redirect('dashboard')
 
     return render(request, 'invoices/create.html')
-
 
 # ===============================
 # PDF TEMPLATE HELPERS
