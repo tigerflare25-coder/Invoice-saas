@@ -55,32 +55,22 @@ def edit_profile(request):
         if form.is_valid():
             updated_user = form.save(commit=False)
 
-            # ─────────────────────────────
             # 🔒 PREMIUM GUARDS
-            # ─────────────────────────────
             if not user.is_premium:
-                updated_user.logo = user.logo  # don't overwrite
+                updated_user.logo = user.logo
 
-            # ─────────────────────────────
-            # 🧠 SAFE DEFAULTS (10x UX)
-            # ─────────────────────────────
+            # 🧠 SAFE DEFAULTS
             updated_user.company_name = request.POST.get('company_name', '').strip()
             updated_user.company_address = request.POST.get('company_address', '').strip()
             updated_user.gst_number = request.POST.get('gst_number', '').strip()
 
-            # Payment link safe
+            # ✅ FIXED PAYMENT LINK
             payment_link = request.POST.get('payment_link', '').strip()
+
             if not payment_link:
-                payment_link = request.user.payment_link  # 👈 fallback
-            if not payment_link:
-                payment_link = None
-    
+                payment_link = user.payment_link
 
-
-    
-
-
-
+            updated_user.payment_link = payment_link or None
 
             # Tax safe
             try:
@@ -100,7 +90,6 @@ def edit_profile(request):
             updated_user.currency = request.POST.get('currency', '₹')[:5]
 
             updated_user.save()
-
             return redirect('dashboard')
 
     else:
