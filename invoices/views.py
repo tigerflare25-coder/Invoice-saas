@@ -203,13 +203,22 @@ def draw_summary(p, invoice, subtotal, y, width):
         y -= 40
         p.setFillColor(colors.blue)
 
-        styles = getSampleStyleSheet()
-        style = styles["Normal"]
+        p.setFillColor(colors.blue)
+        p.drawString(40, y, "Pay Now:")
+        p.linkURL(payment_link, (100, y - 2, 400, y + 12), relative=0)
+        p.setFont("Helvetica", 9)
+        p.drawString(100, y, payment_link[:50])
+      
 
-        text = f'<link href="{payment_link}">Pay Now</link>'
-        para = Paragraph(text, style)
-        para.wrapOn(p, 400, 50)
-        para.drawOn(p, 40, y)
+
+
+# Show actual URL (optional but better UX)
+
+
+# Make link clickable
+
+
+# Show text
 
 
 # ===============================
