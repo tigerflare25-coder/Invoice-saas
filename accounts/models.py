@@ -54,7 +54,7 @@ class User(AbstractUser):
     # ─────────────────────────────
     # SYSTEM
     # ─────────────────────────────
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     # ─────────────────────────────
     # METHODS
