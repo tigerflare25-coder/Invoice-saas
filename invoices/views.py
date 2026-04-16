@@ -56,11 +56,15 @@ def create_invoice(request):
     if request.method == 'POST':
 
         # ✅ SAFE TAX
-        tax_input = request.POST.get('tax_percentage', '0')
-        try:
-            tax_val = float(tax_input) if request.user.is_premium else 0
-        except ValueError:
-            tax_val = 0
+        tax_input = request.POST.get('tax_percentage')
+
+       if request.user.is_premium:
+           try:
+               tax_val = float(tax_input) if tax_input not in [None, ""] else 0
+           except ValueError:
+                tax_val = 0
+       else:
+           tax_val = 0
 
         template = request.POST.get('template', 'minimal')
         payment_link = request.POST.get('payment_link')
