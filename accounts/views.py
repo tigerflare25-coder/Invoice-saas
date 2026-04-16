@@ -70,12 +70,17 @@ def edit_profile(request):
 
             # Payment link safe
             payment_link = request.POST.get('payment_link', '').strip()
+            if not payment_link:
+                payment_link = request.user.payment_link  # 👈 fallback
+            if not payment_link:
+                payment_link = None
+    
 
-           if not payment_link:
-               payment_link = request.user.payment_link  # 👈 fallback
 
-           if not payment_link:
-               payment_link = None
+    
+
+
+
 
             # Tax safe
             try:
