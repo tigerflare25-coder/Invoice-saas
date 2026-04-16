@@ -8,76 +8,98 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard | InvoiceFlow</title>
 
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*{margin:0;padding:0;box-sizing:border-box}
 
 :root{
---bg:#f4f3f0;
---surface:#fff;
---border:rgba(0,0,0,.08);
+--bg:#f8fafc;
+--card:#fff;
+--border:#e5e7eb;
 --text:#111;
---muted:#6b6a67;
+--muted:#6b7280;
 --indigo:#4f46e5;
---red:#dc2626;
 --green:#059669;
+--red:#dc2626;
 }
 
-body{font-family:'DM Sans',sans-serif;background:var(--bg)}
+body{
+font-family:'DM Sans',sans-serif;
+background:var(--bg);
+color:var(--text);
+}
 
-/* NAV */
+/* NAVBAR */
 .nav{
 position:sticky;top:0;z-index:100;
 background:#fff;border-bottom:1px solid var(--border);
-padding:12px 20px;
+padding:12px 16px;
 display:flex;justify-content:space-between;align-items:center;
 }
 
 .logo{font-weight:800}
 .logo span{color:var(--indigo)}
 
+.nav-right{
+display:flex;align-items:center;gap:10px;
+}
+
+.icon-btn{
+width:36px;height:36px;
+border-radius:999px;
+display:flex;align-items:center;justify-content:center;
+background:#f1f5f9;
+color:#6b7280;
+text-decoration:none;
+transition:.2s;
+}
+
+.icon-btn:hover{background:#eef2ff;color:var(--indigo)}
+.icon-btn.logout:hover{background:#fee2e2;color:var(--red)}
+
+/* MAIN */
+.main{max-width:1100px;margin:auto;padding:20px}
+
+/* ONBOARDING CARD */
+.onboard{
+background:#fff;
+border:1px solid var(--border);
+border-radius:14px;
+padding:18px;
+margin-bottom:16px;
+}
+
+.progress{
+height:6px;
+background:#e5e7eb;
+border-radius:999px;
+overflow:hidden;
+margin-top:10px;
+}
+
+.progress-bar{
+height:100%;
+background:var(--indigo);
+}
+
+/* BUTTON */
 .btn{
 background:var(--indigo);
 color:#fff;
-padding:8px 14px;
+padding:10px 16px;
 border-radius:8px;
-text-decoration:none;
 font-size:13px;
-font-weight:600;
+font-weight:700;
+text-decoration:none;
+display:inline-block;
 }
 
 .btn.disabled{
 background:#ccc;
 pointer-events:none;
-cursor:not-allowed;
 }
-
-/* PROFILE ALERT */
-.profile-alert{
-background:#fff7ed;
-border:1px solid #fed7aa;
-color:#9a3412;
-padding:14px;
-border-radius:10px;
-margin-bottom:16px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-flex-wrap:wrap;
-}
-
-.profile-alert strong{color:#7c2d12}
-
-/* UPGRADE BAR */
-.upgrade-bar{
-background:#111;color:#fff;
-padding:10px;text-align:center;font-size:13px;
-}
-
-/* MAIN */
-.main{max-width:1100px;margin:auto;padding:20px}
 
 /* STATS */
 .stats{
@@ -87,7 +109,9 @@ gap:12px;margin-bottom:20px;
 }
 
 .card{
-background:#fff;padding:16px;border-radius:12px;
+background:#fff;
+padding:16px;
+border-radius:12px;
 border:1px solid var(--border);
 }
 
@@ -95,23 +119,29 @@ border:1px solid var(--border);
 
 /* TABLE */
 .table{
-background:#fff;border-radius:12px;
-overflow:hidden;border:1px solid var(--border);
+background:#fff;
+border-radius:12px;
+border:1px solid var(--border);
+overflow:hidden;
 }
 
 table{width:100%;border-collapse:collapse}
 
 th,td{
-padding:12px;font-size:13px;
+padding:12px;
+font-size:13px;
 border-bottom:1px solid var(--border);
 }
 
-th{background:#f9f8f6;text-align:left;font-size:11px;color:#777}
+th{font-size:11px;color:#777;background:#f9fafb}
 
 .actions{text-align:right}
 
 /* EMPTY */
-.empty{padding:40px;text-align:center}
+.empty{
+padding:40px;
+text-align:center;
+}
 
 /* MOBILE */
 @media(max-width:600px){
@@ -129,54 +159,52 @@ th{background:#f9f8f6;text-align:left;font-size:11px;color:#777}
 <div class="nav">
 <div class="logo">Invoice<span>Flow</span></div>
 
-<div style="display:flex;gap:10px;align-items:center;">
+<div class="nav-right">
 
-<a href="{% url 'edit_profile' %}" class="btn" style="background:#111;">
-Settings
+<a href="{% url 'edit_profile' %}" class="icon-btn">
+<i class="fas fa-cog"></i>
 </a>
 
-<!-- Disable if not ready -->
-
-{% if not user.company_name %} <a class="btn disabled">New Invoice</a>
-{% else %} <a href="/create/" class="btn">New Invoice</a>
-{% endif %}
+<a href="/accounts/logout/" class="icon-btn logout">
+<i class="fas fa-power-off"></i>
+</a>
 
 </div>
 </div>
-
-<!-- PROFILE SETUP ALERT -->
-
-{% if not user.company_name %}
 
 <div class="main">
-<div class="profile-alert">
 
+<!-- 🔥 ONBOARDING SYSTEM -->
+
+{% with progress=0 %}
+{% if user.company_name %}{% with progress=progress|add:40 %}{% endwith %}{% endif %}
+{% if user.company_address %}{% with progress=progress|add:30 %}{% endwith %}{% endif %}
+{% if user.payment_link %}{% with progress=progress|add:30 %}{% endwith %}{% endif %}
+
+{% if progress < 100 %}
+
+<div class="onboard">
+
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
 <div>
-<strong>Complete your business profile</strong><br>
-Add your company name & address before creating invoices.
+<strong>Complete your setup ({{ progress }}%)</strong><br>
+<span style="font-size:13px;color:var(--muted);">
+Finish your profile to start sending professional invoices
+</span>
 </div>
 
 <a href="{% url 'edit_profile' %}" class="btn">
 Complete Setup
 </a>
-
 </div>
+
+<div class="progress">
+<div class="progress-bar" style="width: {{ progress }}%"></div>
 </div>
-{% endif %}
 
-<!-- UPGRADE BAR -->
-
-{% if not user.is_premium %}
-
-<div class="upgrade-bar">
-🚀 Remove watermark + unlock templates →
-<a href="/upgrade/" style="color:#60a5fa;font-weight:700;">Upgrade</a>
 </div>
 {% endif %}
-
-<!-- MAIN -->
-
-<div class="main">
+{% endwith %}
 
 <!-- STATS -->
 
@@ -192,6 +220,16 @@ Complete Setup
 <div class="big">₹{{ total_amount|default:"0" }}</div>
 </div>
 
+</div>
+
+<!-- CREATE BUTTON -->
+
+<div style="margin-bottom:14px;">
+{% if user.company_name %}
+<a href="/create/" class="btn">+ New Invoice</a>
+{% else %}
+<a class="btn disabled">+ New Invoice</a>
+{% endif %}
 </div>
 
 <!-- TABLE -->
@@ -228,7 +266,9 @@ Complete Setup
 </td>
 
 <td class="actions">
-<a href="/invoice/{{ invoice.id }}/download/" class="btn-sm">PDF</a>
+<a href="/invoice/{{ invoice.id }}/download/" class="icon-btn">
+<i class="fas fa-download"></i>
+</a>
 </td>
 
 </tr>
@@ -239,17 +279,11 @@ Complete Setup
 <td colspan="4">
 
 <div class="empty">
+
 <h3>No invoices yet</h3>
-<p>Create your first invoice in seconds.</p>
-
-{% if not user.company_name %}
-
-<p style="color:#dc2626;font-size:13px;margin-top:6px;">
-⚠ Complete your profile first
+<p style="margin:8px 0;color:#6b7280;">
+Create your first invoice in seconds
 </p>
-{% endif %}
-
-<br>
 
 {% if user.company_name %} <a href="/create/" class="btn">Create Invoice</a>
 {% else %} <a href="{% url 'edit_profile' %}" class="btn">Complete Setup</a>
