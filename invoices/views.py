@@ -11,303 +11,303 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-
-from .models import Invoice, InvoiceItem
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
+from .models import Invoice, InvoiceItem
 
 # ===============================
+
 # DASHBOARD
+
 # ===============================
+
 @login_required
 def dashboard(request):
-    request.user.check_premium_status()
+request.user.check_premium_status()
 
-    if request.method == "POST" and request.FILES.get("logo"):
-        if request.user.is_premium:
-            request.user.logo = request.FILES["logo"]
-            request.user.save()
-        else:
-            return redirect('upgrade')
+```
+# Upload logo (premium only)
+if request.method == "POST" and request.FILES.get("logo"):
+    if request.user.is_premium:
+        request.user.logo = request.FILES["logo"]
+        request.user.save()
+    else:
+        return redirect('upgrade')
 
-    invoices = request.user.invoice_set.all().order_by('-created_at')
+invoices = request.user.invoice_set.all().order_by('-created_at')
 
-    # Auto update overdue
-    for inv in invoices:
-        if inv.due_date and inv.due_date < date.today() and inv.status == "pending":
-            inv.status = "overdue"
-            inv.save()
+# Auto mark overdue
+for inv in invoices:
+    if inv.due_date and inv.due_date < date.today() and inv.status == "pending":
+        inv.status = "overdue"
+        inv.save()
 
-    total = sum(inv.total_amount() for inv in invoices)
+total = sum(inv.total_amount() for inv in invoices)
 
-    context = {
-        "invoices": invoices,
-        "total_amount": total,
-        "invoice_count": invoices.count(),
-    }
-    return render(request, "invoices/dashboard.html", context)
-
+return render(request, "invoices/dashboard.html", {
+    "invoices": invoices,
+    "total_amount": total,
+    "invoice_count": invoices.count(),
+})
+```
 
 # ===============================
+
 # CREATE INVOICE
+
 # ===============================
 
 @login_required
 def create_invoice(request):
-    if request.method == 'POST':
+if request.method == 'POST':
 
-        # ===============================
-        # BASIC FIELDS
-        # ===============================
-        client_name = request.POST.get('client_name', '').strip()
-        template = request.POST.get('template', 'minimal')
-        payment_link = request.POST.get('payment_link', '').strip() or None
+```
+    client_name = request.POST.get('client_name', '').strip()
+    template = request.POST.get('template', 'minimal')
 
-        # Optional (if you add later)
-        due_date = request.POST.get('due_date') or None
+    # 🔥 SMART PAYMENT LINK
+    payment_link = request.POST.get('payment_link', '').strip()
+    if not payment_link:
+        payment_link = request.user.payment_link  # fallback
 
-        # ===============================
-        # SAFE TAX HANDLING
-        # ===============================
-        tax_input = request.POST.get('tax_percentage', '').strip()
-        tax_val = 0
+    payment_link = payment_link or None
 
-        if request.user.is_premium and tax_input:
-            try:
-                tax_val = float(tax_input)
-                if tax_val < 0:
-                    tax_val = 0
-            except ValueError:
-                tax_val = 0
+    due_date = request.POST.get('due_date') or None
 
-        # ===============================
-        # CREATE INVOICE
-        # ===============================
-        invoice = Invoice.objects.create(
-            user=request.user,
-            client_name=client_name or "Unnamed Client",
-            tax_percentage=tax_val,
-            template=template,
-            payment_link=payment_link,
-            due_date=due_date
+    # TAX (premium only)
+    tax_val = 0
+    tax_input = request.POST.get('tax_percentage', '').strip()
+
+    if request.user.is_premium and tax_input:
+        try:
+            tax_val = max(float(tax_input), 0)
+        except:
+            tax_val = 0
+
+    # CREATE INVOICE
+    invoice = Invoice.objects.create(
+        user=request.user,
+        client_name=client_name or "Unnamed Client",
+        tax_percentage=tax_val,
+        template=template,
+        payment_link=payment_link,
+        due_date=due_date
+    )
+
+    # ITEMS
+    descriptions = request.POST.getlist('desc[]')
+    quantities = request.POST.getlist('qty[]')
+    prices = request.POST.getlist('price[]')
+
+    for i in range(len(descriptions)):
+        desc = descriptions[i].strip()
+        if not desc:
+            continue
+
+        try:
+            qty = max(int(quantities[i]), 1)
+        except:
+            qty = 1
+
+        try:
+            price = max(float(prices[i]), 0)
+        except:
+            price = 0
+
+        InvoiceItem.objects.create(
+            invoice=invoice,
+            description=desc,
+            quantity=qty,
+            unit_price=price
         )
 
-        # ===============================
-        # ITEMS PROCESSING (SAFE)
-        # ===============================
-        descriptions = request.POST.getlist('desc[]')
-        quantities = request.POST.getlist('qty[]')
-        prices = request.POST.getlist('price[]')
+    return redirect('dashboard')
 
-        for i in range(len(descriptions)):
-            desc = descriptions[i].strip()
-
-            # skip empty rows
-            if not desc:
-                continue
-
-            # SAFE QUANTITY
-            try:
-                qty = int(quantities[i])
-                if qty <= 0:
-                    qty = 1
-            except (ValueError, IndexError):
-                qty = 1
-
-            # SAFE PRICE
-            try:
-                price = float(prices[i])
-                if price < 0:
-                    price = 0
-            except (ValueError, IndexError):
-                price = 0
-
-            InvoiceItem.objects.create(
-                invoice=invoice,
-                description=desc,
-                quantity=qty,
-                unit_price=price
-            )
-
-        # ===============================
-        # REDIRECT
-        # ===============================
-        return redirect('dashboard')
-
-    return render(request, 'invoices/create.html')
+return render(request, 'invoices/create.html')
+```
 
 # ===============================
-# PDF TEMPLATE HELPERS
+
+# PDF HELPERS
+
 # ===============================
 
 def draw_header(p, request, width, height):
-    if request.user.is_premium:
-        p.setFillColor(colors.HexColor("#E6FFFA"))
-        p.rect(0, height - 120, width, 120, fill=1, stroke=0)
+if request.user.is_premium:
+p.setFillColor(colors.HexColor("#E6FFFA"))
+p.rect(0, height - 120, width, 120, fill=1, stroke=0)
 
-    p.setFillColor(colors.black)
+```
+p.setFillColor(colors.black)
 
-    if request.user.is_premium and request.user.logo:
-        try:
-            res = requests.get(request.user.logo.url)
-            img = ImageReader(BytesIO(res.content))
-            p.drawImage(img, 40, height - 80, width=80, height=40)
-        except:
-            p.setFont("Helvetica-Bold", 18)
-            p.drawString(40, height - 70, "INVOICEFLOW")
-    else:
+if request.user.is_premium and request.user.logo:
+    try:
+        res = requests.get(request.user.logo.url)
+        img = ImageReader(BytesIO(res.content))
+        p.drawImage(img, 40, height - 80, width=80, height=40)
+    except:
         p.setFont("Helvetica-Bold", 18)
         p.drawString(40, height - 70, "INVOICEFLOW")
-
+else:
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(40, height - 70, "INVOICEFLOW")
+```
 
 def draw_items(p, items, width, height):
-    y = height - 240
+y = height - 240
 
-    p.setFillColor(colors.HexColor("#F3F4F6"))
-    p.rect(40, y, width - 80, 25, fill=1)
+```
+p.setFillColor(colors.HexColor("#F3F4F6"))
+p.rect(40, y, width - 80, 25, fill=1)
 
-    p.setFillColor(colors.black)
-    p.setFont("Helvetica-Bold", 10)
-    p.drawString(50, y + 7, "Description")
-    p.drawString(320, y + 7, "Qty")
-    p.drawString(390, y + 7, "Price")
-    p.drawRightString(width - 50, y + 7, "Total")
+p.setFillColor(colors.black)
+p.setFont("Helvetica-Bold", 10)
 
-    y -= 25
-    subtotal = Decimal('0.00')
+p.drawString(50, y + 7, "Description")
+p.drawString(320, y + 7, "Qty")
+p.drawString(390, y + 7, "Price")
+p.drawRightString(width - 50, y + 7, "Total")
 
-    for item in items:
-        p.drawString(50, y, item.description)
-        p.drawString(320, y, str(item.quantity))
-        p.drawString(390, y, f"{item.unit_price}")
+y -= 25
+subtotal = Decimal('0.00')
 
-        total = item.total_price()
-        p.drawRightString(width - 50, y, f"{total:.2f}")
+for item in items:
+    p.drawString(50, y, item.description)
+    p.drawString(320, y, str(item.quantity))
+    p.drawString(390, y, f"{item.unit_price}")
 
-        subtotal += Decimal(total)
-        y -= 20
+    total = item.total_price()
+    p.drawRightString(width - 50, y, f"{total:.2f}")
 
-    return subtotal, y
+    subtotal += Decimal(total)
+    y -= 20
 
-
-# ===============================
-# TEMPLATE RENDERERS
-# ===============================
-
-def render_minimal(p, invoice, items, request, width, height):
-    draw_header(p, request, width, height)
-
-    p.setFont("Helvetica-Bold", 24)
-    p.drawRightString(width - 40, height - 70, "INVOICE")
-
-    subtotal, y = draw_items(p, items, width, height)
-
-    draw_summary(p, invoice, subtotal, y, width)
-
-
-def render_gst(p, invoice, items, request, width, height):
-    draw_header(p, request, width, height)
-
-    p.setFont("Helvetica-Bold", 20)
-    p.drawString(40, height - 100, "GST INVOICE")
-    p.drawString(40, height - 115, "GSTIN: XXXXXXXX")
-
-    subtotal, y = draw_items(p, items, width, height)
-
-    draw_summary(p, invoice, subtotal, y, width)
-
-
-def render_premium(p, invoice, items, request, width, height):
-    p.setFillColor(colors.HexColor("#111827"))
-    p.rect(0, height - 120, width, 120, fill=1)
-
-    p.setFillColor(colors.white)
-    p.setFont("Helvetica-Bold", 20)
-    p.drawString(40, height - 80, "INVOICEFLOW")
-
-    subtotal, y = draw_items(p, items, width, height)
-
-    draw_summary(p, invoice, subtotal, y, width)
-
+return subtotal, y
+```
 
 # ===============================
-# SUMMARY + PAYMENT
+
+# SUMMARY (🔥 FIXED)
+
 # ===============================
 
 def draw_summary(p, invoice, subtotal, y, width):
+y -= 20
+
+```
+p.setFont("Helvetica", 10)
+p.drawString(350, y, "Subtotal:")
+p.drawRightString(width - 50, y, f"INR {subtotal:.2f}")
+
+total = subtotal
+
+if invoice.tax_percentage:
+    tax = (subtotal * Decimal(str(invoice.tax_percentage))) / 100
+    total += tax
     y -= 20
+    p.drawString(350, y, f"Tax ({invoice.tax_percentage}%):")
+    p.drawRightString(width - 50, y, f"INR {tax:.2f}")
 
-    p.setFont("Helvetica", 10)
-    p.drawString(350, y, "Subtotal:")
-    p.drawRightString(width - 50, y, f"INR {subtotal:.2f}")
+y -= 30
+p.setFont("Helvetica-Bold", 14)
+p.drawString(350, y, "TOTAL:")
+p.drawRightString(width - 50, y, f"INR {total:.2f}")
 
-    total = subtotal
+# 🔥 SMART PAYMENT LINK (MAIN FIX)
+payment_link = invoice.payment_link or invoice.user.payment_link
 
-    if invoice.tax_percentage:
-        tax = (subtotal * Decimal(str(invoice.tax_percentage))) / 100
-        total += tax
-        y -= 20
-        p.drawString(350, y, f"Tax ({invoice.tax_percentage}%):")
-        p.drawRightString(width - 50, y, f"INR {tax:.2f}")
+if payment_link:
+    y -= 40
+    p.setFillColor(colors.blue)
 
-    y -= 30
-    p.setFont("Helvetica-Bold", 14)
-    p.drawString(350, y, "TOTAL:")
-    p.drawRightString(width - 50, y, f"INR {total:.2f}")
+    styles = getSampleStyleSheet()
+    style = styles["Normal"]
 
-    # 🔥 PAYMENT LINK
-    if invoice.payment_link:
-        y -= 40
-        p.setFillColor(colors.blue)
-        styles = getSampleStyleSheet()
-        style = styles["Normal"]
-
-        text = f'<link href="{invoice.payment_link}">Pay Now</link>'
-        para = Paragraph(text, style)
-        para.wrapOn(p, 400, 50)
-        para.drawOn(p, 40, y)
-        
-
-
-
+    text = f'<link href="{payment_link}">Pay Now</link>'
+    para = Paragraph(text, style)
+    para.wrapOn(p, 400, 50)
+    para.drawOn(p, 40, y)
+```
 
 # ===============================
-# DOWNLOAD
+
+# TEMPLATE RENDERERS
+
+# ===============================
+
+def render_minimal(p, invoice, items, request, width, height):
+draw_header(p, request, width, height)
+p.setFont("Helvetica-Bold", 24)
+p.drawRightString(width - 40, height - 70, "INVOICE")
+
+```
+subtotal, y = draw_items(p, items, width, height)
+draw_summary(p, invoice, subtotal, y, width)
+```
+
+def render_gst(p, invoice, items, request, width, height):
+draw_header(p, request, width, height)
+p.setFont("Helvetica-Bold", 20)
+p.drawString(40, height - 100, "GST INVOICE")
+p.drawString(40, height - 115, "GSTIN: XXXXXXXX")
+
+```
+subtotal, y = draw_items(p, items, width, height)
+draw_summary(p, invoice, subtotal, y, width)
+```
+
+def render_premium(p, invoice, items, request, width, height):
+p.setFillColor(colors.HexColor("#111827"))
+p.rect(0, height - 120, width, 120, fill=1)
+
+```
+p.setFillColor(colors.white)
+p.setFont("Helvetica-Bold", 20)
+p.drawString(40, height - 80, "INVOICEFLOW")
+
+subtotal, y = draw_items(p, items, width, height)
+draw_summary(p, invoice, subtotal, y, width)
+```
+
+# ===============================
+
+# DOWNLOAD PDF
+
 # ===============================
 
 @login_required
 def download_invoice(request, invoice_id):
-    invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
-    items = invoice.items.all()
+invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
+items = invoice.items.all()
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="Invoice_{invoice.id}.pdf"'
+```
+response = HttpResponse(content_type='application/pdf')
+response['Content-Disposition'] = f'attachment; filename="Invoice_{invoice.id}.pdf"'
 
-    p = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
+p = canvas.Canvas(response, pagesize=A4)
+width, height = A4
 
-    # 🔥 TEMPLATE SWITCH
-    if invoice.template == 'gst':
-        render_gst(p, invoice, items, request, width, height)
+if invoice.template == 'gst':
+    render_gst(p, invoice, items, request, width, height)
+elif invoice.template == 'premium':
+    render_premium(p, invoice, items, request, width, height)
+else:
+    render_minimal(p, invoice, items, request, width, height)
 
-    elif invoice.template == 'premium':
-        render_premium(p, invoice, items, request, width, height)
+# Watermark for free users
+if not request.user.is_premium:
+    p.setFont("Helvetica-Bold", 50)
+    p.setFillColor(colors.lightgrey)
+    p.drawCentredString(width / 2, height / 2, "FREE VERSION")
 
-    else:
-        render_minimal(p, invoice, items, request, width, height)
+# Footer
+p.setFont("Helvetica-Oblique", 8)
+p.setFillColor(colors.grey)
+p.drawCentredString(width / 2, 30, "Create your invoices at InvoiceFlow")
 
-    # WATERMARK
-    if not request.user.is_premium:
-        p.setFont("Helvetica-Bold", 50)
-        p.setFillColor(colors.lightgrey)
-        p.drawCentredString(width / 2, height / 2, "FREE VERSION")
+p.showPage()
+p.save()
 
-    # 🔥 VIRAL FOOTER
-    p.setFont("Helvetica-Oblique", 8)
-    p.setFillColor(colors.grey)
-    p.drawCentredString(width / 2, 30, "Create your invoices at InvoiceFlow")
-
-    p.showPage()
-    p.save()
-    return response
+return response
+```
