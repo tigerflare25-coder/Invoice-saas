@@ -1,249 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>Create Invoice | InvoiceFlow</title>
-    <style>
-    :root {
-        --primary: #6366f1;
-        --primary-hover: #4f46e5;
-        --bg: #0f172a;
-        --card: #1e293b;
-        --text: #f8fafc;
-        --text-dim: #94a3b8;
-        --border: #334155;
-        --accent: #10b981;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Invoice | InvoiceFlow</title>
 
-    body {
-        font-family: 'Inter', -apple-system, sans-serif;
-        background-color: var(--bg);
-        color: var(--text);
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        justify-content: center;
-    }
+<style>
+:root {
+    --primary: #6366f1;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #f8fafc;
+    --text-dim: #94a3b8;
+    --border: #334155;
+}
 
-    .container {
-        max-width: 900px;
-        width: 100%;
-        background: var(--card);
-        padding: 20px;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        border: 1px solid var(--border);
-    }
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 16px;
+}
 
-    @media (min-width: 768px) {
-        body { padding: 40px 20px; }
-        .container { padding: 40px; }
-    }
+.container {
+    max-width: 900px;
+    margin: auto;
+    background: var(--card);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
 
-    header {
-        margin-bottom: 24px;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 16px;
-    }
+/* HEADER */
+header {
+    margin-bottom: 20px;
+}
+h2 { margin: 0; }
+p { color: var(--text-dim); }
 
-    h2 { margin: 0; font-size: 24px; }
-    @media (min-width: 768px) {
-        h2 { font-size: 28px; }
-    }
+/* FORM */
+.form-group { margin-bottom: 16px; }
 
-    p { color: var(--text-dim); margin: 8px 0 0; }
+label {
+    font-size: 13px;
+    color: var(--text-dim);
+    display: block;
+    margin-bottom: 6px;
+}
 
-    .form-group { margin-bottom: 20px; }
+input, select {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: white;
+}
 
-    label {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 13px;
-        color: var(--text-dim);
-    }
+/* GRID */
+.row {
+    display: grid;
+    gap: 12px;
+}
+@media(min-width:768px){
+    .row { grid-template-columns: 1fr 1fr; }
+}
 
-    input, select {
-        width: 100%;
-        padding: 12px;
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        color: white;
-    }
+/* ITEMS */
+.item-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(255,255,255,0.03);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
 
-    input:focus { outline: none; border-color: var(--primary); }
-
-    /* Responsive row */
-    .row {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-
-    @media (min-width: 768px) {
-        .row {
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-    }
-
-    /* Table header hidden on mobile */
-    .items-header {
-        display: none;
-    }
-
-    @media (min-width: 768px) {
-        .items-header {
-            display: grid;
-            grid-template-columns: 2fr 0.6fr 1fr 0.4fr;
-            gap: 15px;
-            margin-bottom: 10px;
-            color: var(--text-dim);
-            font-size: 12px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-    }
-
-    /* Mobile item card */
+@media(min-width:768px){
     .item-row {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        background: rgba(255,255,255,0.02);
-        padding: 12px;
-        border-radius: 10px;
-        margin-bottom: 12px;
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        align-items: center;
     }
+}
 
-    @media (min-width: 768px) {
-        .item-row {
-            display: grid;
-            grid-template-columns: 2fr 0.6fr 1fr 0.4fr;
-            gap: 15px;
-            align-items: center;
-            background: transparent;
-            padding: 0;
-        }
-    }
+/* BUTTONS */
+.btn {
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
 
-    .btn {
-        cursor: pointer;
-        padding: 12px;
-        border-radius: 8px;
-        font-weight: 600;
-        border: none;
-    }
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    width: 100%;
+    font-weight: bold;
+}
 
-    .btn-primary {
-        background: var(--primary);
-        color: white;
-        width: 100%;
-        font-size: 16px;
-        margin-top: 20px;
-    }
+.btn-add {
+    border: 1px dashed var(--primary);
+    color: var(--primary);
+    background: transparent;
+    width: 100%;
+}
 
-    .btn-primary:hover { background: var(--primary-hover); }
+.btn-remove {
+    background: #ef4444;
+    color: white;
+}
 
-    .btn-add {
-        background: transparent;
-        color: var(--primary);
-        border: 1px dashed var(--primary);
-        margin-bottom: 20px;
-        width: 100%;
-    }
-
-    .btn-remove {
-        background: #ef4444;
-        color: white;
-        padding: 8px;
-        font-size: 12px;
-        border-radius: 6px;
-        width: 100%;
-    }
-
-    @media (min-width: 768px) {
-        .btn-remove {
-            width: auto;
-        }
-    }
-
-    .badge-pro {
-        background: linear-gradient(90deg, #f59e0b, #fbbf24);
-        color: #000;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 10px;
-        margin-left: 8px;
-    }
-
-    .readonly-field { opacity: 0.6; cursor: not-allowed; }
+/* PRO BADGE */
+.badge {
+    font-size: 10px;
+    background: gold;
+    color: black;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
 </style>
 </head>
+
 <body>
 
 <div class="container">
-    <header>
-        <h2>Create New Invoice</h2>
-        <p>Fill in the details to generate your professional invoice.</p>
-    </header>
+<header>
+    <h2>Create Invoice</h2>
+    <p>Create invoice & get paid faster ⚡</p>
+</header>
 
-    <form method="POST" id="invoice-form">
-        {% csrf_token %}
-        
-        <div class="row">
-            <div class="form-group">
-                <label>Client Name</label>
-                <input type="text" name="client_name" placeholder="e.g. Acme Corp" required>
-            </div>
-            <div class="form-group">
-                <label>
-                    Tax Percentage (%) 
-                    {% if not user.is_premium %}<span class="badge-pro">PRO ONLY</span>{% endif %}
-                </label>
-                <input type="number" name="tax_percentage" 
-                       {% if not user.is_premium %}class="readonly-field" readonly value="0"
-                       {% else %}placeholder="18"{% endif %}>
-            </div>
-        </div>
+<form method="POST">
+{% csrf_token %}
 
-        <div class="items-header">
-            <span>Description</span>
-            <span>Qty</span>
-            <span>Unit Price</span>
-            <span></span>
-        </div>
+<!-- CLIENT -->
+<div class="row">
+    <div class="form-group">
+        <label>Client Name</label>
+        <input type="text" name="client_name" required>
+    </div>
 
-        <div id="item-container">
-            <div class="item-row">
-                <input type="text" name="desc[]" placeholder="Item description" required>
-                <input type="number" name="qty[]" value="1" min="1" required>
-                <input type="number" step="0.01" name="price[]" placeholder="500.00" required>
-                <button type="button" class="btn btn-remove" onclick="this.parentElement.remove()">✕</button>
-            </div>
-        </div>
+    <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" name="due_date">
+    </div>
+</div>
 
-        <button type="button" class="btn btn-add" onclick="addItem()">+ Add Line Item</button>
+<!-- TEMPLATE -->
+<div class="form-group">
+    <label>
+        Template 
+        {% if not user.is_premium %}<span class="badge">PRO</span>{% endif %}
+    </label>
 
-        <button type="submit" class="btn btn-primary">Generate & Save Invoice</button>
-    </form>
+    <select name="template">
+        <option value="minimal">Minimal (Free)</option>
+
+        {% if user.is_premium %}
+            <option value="gst">GST Invoice</option>
+            <option value="premium">Premium</option>
+        {% else %}
+            <option disabled>GST Invoice (Pro)</option>
+            <option disabled>Premium (Pro)</option>
+        {% endif %}
+    </select>
+</div>
+
+<!-- PAYMENT LINK -->
+<div class="form-group">
+    <label>
+        Payment Link 
+        {% if not user.is_premium %}<span class="badge">PRO</span>{% endif %}
+    </label>
+
+    <input type="url" name="payment_link"
+        {% if not user.is_premium %}readonly placeholder="Upgrade to add payment link"{% endif %}>
+</div>
+
+<!-- TAX -->
+<div class="form-group">
+    <label>
+        Tax %
+        {% if not user.is_premium %}<span class="badge">PRO</span>{% endif %}
+    </label>
+
+    <input type="number" name="tax_percentage"
+        {% if not user.is_premium %}readonly value="0"{% endif %}>
+</div>
+
+<!-- ITEMS -->
+<div id="items">
+    <div class="item-row">
+        <input name="desc[]" placeholder="Description" required>
+        <input name="qty[]" type="number" value="1">
+        <input name="price[]" type="number" step="0.01" placeholder="0.00">
+        <button type="button" class="btn btn-remove" onclick="removeItem(this)">✕</button>
+    </div>
+</div>
+
+<button type="button" class="btn btn-add" onclick="addItem()">+ Add Item</button>
+
+<button type="submit" class="btn btn-primary">Generate Invoice</button>
+
+</form>
 </div>
 
 <script>
-    function addItem() {
-        const container = document.getElementById('item-container');
-        const div = document.createElement('div');
-        div.className = 'item-row';
-        div.innerHTML = `
-            <input type="text" name="desc[]" placeholder="Item description" required>
-            <input type="number" name="qty[]" value="1" min="1" required>
-            <input type="number" step="0.01" name="price[]" placeholder="0.00" required>
-            <button type="button" class="btn btn-remove" onclick="this.parentElement.remove()">✕</button>
-        `;
-        container.appendChild(div);
-    }
+function addItem() {
+    const div = document.createElement('div');
+    div.className = 'item-row';
+    div.innerHTML = `
+        <input name="desc[]" placeholder="Description" required>
+        <input name="qty[]" type="number" value="1">
+        <input name="price[]" type="number" step="0.01">
+        <button type="button" class="btn btn-remove" onclick="removeItem(this)">✕</button>
+    `;
+    document.getElementById('items').appendChild(div);
+}
+
+function removeItem(btn) {
+    btn.parentElement.remove();
+}
 </script>
 
 </body>
