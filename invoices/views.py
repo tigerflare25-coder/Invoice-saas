@@ -50,16 +50,22 @@ def dashboard(request):
 # ===============================
 # CREATE INVOICE
 # ===============================
+
 @login_required
 def create_invoice(request):
     if request.method == 'POST':
 
+        # ✅ SAFE TAX
         tax_input = request.POST.get('tax_percentage', '0')
-        tax_val = float(tax_input) if request.user.is_premium else 0
+        try:
+            tax_val = float(tax_input) if request.user.is_premium else 0
+        except ValueError:
+            tax_val = 0
 
         template = request.POST.get('template', 'minimal')
         payment_link = request.POST.get('payment_link')
 
+        # ✅ CREATE INVOICE
         invoice = Invoice.objects.create(
             user=request.user,
             client_name=request.POST.get('client_name'),
@@ -72,14 +78,35 @@ def create_invoice(request):
         quantities = request.POST.getlist('qty[]')
         prices = request.POST.getlist('price[]')
 
+        # ✅ SAFE LOOP
         for i in range(len(descriptions)):
-            if descriptions[i].strip():
-                InvoiceItem.objects.create(
-                    invoice=invoice,
-                    description=descriptions[i],
-                    quantity=int(quantities[i] or 1),
-                    unit_price=float(prices[i] or 0)
-                )
+            desc = descriptions[i].strip()
+
+            if not desc:
+                continue  # skip empty rows
+
+            # SAFE quantity
+            try:
+                qty = int(quantities[i])
+                if qty <= 0:
+                    qty = 1
+            except (ValueError, IndexError):
+                qty = 1
+
+            # SAFE price
+            try:
+                price = float(prices[i])
+                if price < 0:
+                    price = 0
+            except (ValueError, IndexError):
+                price = 0
+
+            InvoiceItem.objects.create(
+                invoice=invoice,
+                description=desc,
+                quantity=qty,
+                unit_price=price
+            )
 
         return redirect('dashboard')
 
