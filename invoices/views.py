@@ -13,6 +13,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 
 from .models import Invoice, InvoiceItem
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
 
 
 # ===============================
@@ -258,7 +260,16 @@ def draw_summary(p, invoice, subtotal, y, width):
     if invoice.payment_link:
         y -= 40
         p.setFillColor(colors.blue)
-        p.drawString(40, y, f"Pay Now: {invoice.payment_link}")
+        styles = getSampleStyleSheet()
+        style = styles["Normal"]
+
+        text = f'<link href="{invoice.payment_link}">Pay Now</link>'
+        para = Paragraph(text, style)
+        para.wrapOn(p, 400, 50)
+        para.drawOn(p, 40, y)
+        
+
+
 
 
 # ===============================
