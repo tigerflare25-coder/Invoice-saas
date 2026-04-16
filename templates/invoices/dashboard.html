@@ -182,7 +182,14 @@ text-align:center;
 {% if user.payment_link %}{% with progress=progress|add:30 %}{% endwith %}{% endif %}
 
 {% if progress < 100 %}
-
+{% if not user.is_premium %}
+<div style="background:black;color:white;padding:12px;border-radius:10px;margin-bottom:12px;">
+    Upgrade to remove watermark & accept payments ⚡
+    <a href="/upgrade/" style="background:white;color:black;padding:5px 10px;border-radius:6px;margin-left:10px;">
+        Upgrade ₹249
+    </a>
+</div>
+{% endif %}
 <div class="onboard">
 
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
