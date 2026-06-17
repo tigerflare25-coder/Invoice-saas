@@ -189,7 +189,7 @@ def draw_summary(p, invoice, subtotal, y, width):
     p.setFillColor(colors.black)
 
     p.drawString(350, y, "Subtotal:")
-    p.drawRightString(width - 50, y, f"INR {subtotal:.2f}")
+    p.drawRightString(width - 50, y, f"₹ {subtotal:.2f}")
 
     total = subtotal
 
@@ -200,7 +200,7 @@ def draw_summary(p, invoice, subtotal, y, width):
 
         p.setFillColor(colors.grey)
         p.drawString(350, y, f"Tax ({invoice.tax_percentage}%):")
-        p.drawRightString(width - 50, y, f"INR {tax:.2f}")
+        p.drawRightString(width - 50, y, f"₹ {tax:.2f}")
 
     y -= 25
 
@@ -208,7 +208,7 @@ def draw_summary(p, invoice, subtotal, y, width):
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 14)
     p.drawString(350, y, "TOTAL")
-    p.drawRightString(width - 50, y, f"INR {total:.2f}")
+    p.drawRightString(width - 50, y, f"₹ {total:.2f}")
 
     # ─────────────────────────────
     # 💳 PAYMENT SECTION (LEFT SIDE)
