@@ -187,76 +187,68 @@ def draw_items(p, items, width, height):
     return subtotal, y
 
 
+import requests
+from io import BytesIO
+from reportlab.lib.utils import ImageReader
+
 def draw_summary(p, invoice, subtotal, y, width):
     y -= 20
 
-    # Initialize typography styles for flowable components
-    styles = getSampleStyleSheet()
+    # 1. Grab a clean, crisp transparent PNG of the Rupee icon 
+    # (Using a reliable open-source asset repository)
+    RUPEE_ICON_URL = "https://raw.githubusercontent.com/bndw/wifi-card/master/src/assets/rupee.png"
     
-    style_normal = ParagraphStyle(
-        'CurrencyNormal',
-        parent=styles['Normal'],
-        fontName='Helvetica',
-        fontSize=10,
-        alignment=TA_RIGHT,
-        textColor=colors.black
-    )
-    
-    style_grey = ParagraphStyle(
-        'CurrencyGrey',
-        parent=styles['Normal'],
-        fontName='Helvetica',
-        fontSize=10,
-        alignment=TA_RIGHT,
-        textColor=colors.grey
-    )
-    
-    style_bold = ParagraphStyle(
-        'CurrencyBold',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
-        fontSize=14,
-        alignment=TA_RIGHT,
-        textColor=colors.black
-    )
+    try:
+        res = requests.get(RUPEE_ICON_URL, timeout=5)
+        rupee_img = ImageReader(BytesIO(res.content))
+    except Exception:
+        rupee_img = None
 
-    # 1. Subtotal Label & Value
+    # 2. Subtotal
     p.setFont("Helvetica", 10)
     p.setFillColor(colors.black)
     p.drawString(350, y, "Subtotal:")
     
-    subtotal_text = f"&#8377; {subtotal:.2f}"
-    subtotal_para = Paragraph(subtotal_text, style_normal)
-    subtotal_para.wrap(200, 20)
-    subtotal_para.drawOn(p, width - 240, y)
+    if rupee_img:
+        # Place the Rupee symbol exactly at the proper height relative to text line
+        p.drawImage(rupee_img, width - 115, y - 1, width=8, height=10, mask='auto')
+        p.drawRightString(width - 50, y, f"{subtotal:.2f}")
+    else:
+        p.drawRightString(width - 50, y, f"Rs. {subtotal:.2f}")
 
     total = subtotal
 
-    # 2. Tax Label & Value
+    # 3. Tax
     if invoice.tax_percentage:
         tax = (subtotal * Decimal(str(invoice.tax_percentage))) / 100
         total += tax
         y -= 18
 
         p.setFillColor(colors.grey)
+        p.setFont("Helvetica", 10)
         p.drawString(350, y, f"Tax ({invoice.tax_percentage}%):")
         
-        tax_text = f"&#8377; {tax:.2f}"
-        tax_para = Paragraph(tax_text, style_grey)
-        tax_para.wrap(200, 20)
-        tax_para.drawOn(p, width - 240, y)
+        if rupee_img:
+            p.drawImage(rupee_img, width - 115, y - 1, width=8, height=10, mask='auto')
+            p.drawRightString(width - 50, y, f"{tax:.2f}")
+        else:
+            p.drawRightString(width - 50, y, f"Rs. {tax:.2f}")
 
     y -= 25
 
-    # 3. TOTAL Label & Value
+    # 4. TOTAL
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 14)
     p.drawString(350, y, "TOTAL")
     
-    total_text = f"&#8377; {total:.2f}"
-    total_para = Paragraph(total_text, style_bold)
-    total_para.wrap(200, 25)
-    total_para.drawOn(p, width - 240, y - 4)
+    if rupee_img:
+        # Slightly scaled up layout for the bolded section total
+        p.drawImage(rupee_img, width - 125, y - 1, width=10, height=13, mask='auto')
+        p.drawRightString(width - 50, y, f"{total:.2f}")
+    else:
+        p.drawRightString(width - 50, y, f"Rs. {total:.2f}")
+
+    # ... (rest of your payment section remains exactly the same)
 
     # 4. PAYMENT SECTION
     payment_link = invoice.payment_link or invoice.user.payment_link
