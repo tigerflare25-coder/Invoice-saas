@@ -1,42 +1,28 @@
+import os
+import io
+import urllib.request
 import requests
 from io import BytesIO
 from decimal import Decimal
 from datetime import date
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from decimal import Decimal
-from reportlab.lib import colors
-from reportlab.platypus import Paragraph
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_RIGHT
-import os
+
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-import io
-import urllib.request
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.cidfonts import CIDFont
 
+# ReportLab core engines
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from reportlab.platypus import Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
 
+# ReportLab flowables & styles for safe HTML entity rendering (Rupee Symbol)
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_RIGHT
 
 from .models import Invoice, InvoiceItem
-try:
-    # Register ReportLab's built-in universal Unicode/Multi-byte layout
-    pdfmetrics.registerFont(CIDFont('HeiseiMin-W3', 'EUC-H'))
-    # This acts as a global system flag letting our draw function know it's safe to use Unicode
-    UNICODE_READY = True
-    print("✅ Universal Unicode engine mapped successfully!")
-except Exception as e:
-    UNICODE_READY = False
-    print(f"❌ Unicode registration skipped: {e}")
 
 # ===============================
 # DASHBOARD
@@ -77,10 +63,10 @@ def dashboard(request):
 
 @login_required
 def create_invoice(request):
-
     if not request.user.is_premium:
         if request.user.invoice_set.count() >= 3:
             return redirect('upgrade')
+            
     if request.method == 'POST':
         client_name = request.POST.get('client_name', '').strip()
         template = request.POST.get('template', 'minimal')
@@ -187,6 +173,7 @@ def draw_items(p, items, width, height):
     subtotal = Decimal('0.00')
 
     for item in items:
+        p.setFont("Helvetica", 10)
         p.drawString(50, y, item.description)
         p.drawString(320, y, str(item.quantity))
         p.drawString(390, y, f"{item.unit_price}")
@@ -199,19 +186,13 @@ def draw_items(p, items, width, height):
 
     return subtotal, y
 
-from decimal import Decimal
-from reportlab.lib import colors
-from reportlab.platypus import Paragraph
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_RIGHT
 
 def draw_summary(p, invoice, subtotal, y, width):
     y -= 20
 
-    # Initialize styles safely
+    # Initialize typography styles for flowable components
     styles = getSampleStyleSheet()
     
-    # Custom styles to avoid conflict names
     style_normal = ParagraphStyle(
         'CurrencyNormal',
         parent=styles['Normal'],
@@ -244,7 +225,6 @@ def draw_summary(p, invoice, subtotal, y, width):
     p.setFillColor(colors.black)
     p.drawString(350, y, "Subtotal:")
     
-    # Uses HTML Entity for the Rupee symbol inside standard Helvetica flowable
     subtotal_text = f"&#8377; {subtotal:.2f}"
     subtotal_para = Paragraph(subtotal_text, style_normal)
     subtotal_para.wrap(200, 20)
@@ -278,11 +258,7 @@ def draw_summary(p, invoice, subtotal, y, width):
     total_para.wrap(200, 25)
     total_para.drawOn(p, width - 240, y - 4)
 
-    # ... (rest of your payment section remains the same)
-
-    # ─────────────────────────────
-    # 💳 PAYMENT SECTION (LEFT SIDE)
-    # ─────────────────────────────
+    # 4. PAYMENT SECTION
     payment_link = invoice.payment_link or invoice.user.payment_link
 
     if payment_link:
@@ -302,7 +278,7 @@ def draw_summary(p, invoice, subtotal, y, width):
         p.setFillColor(colors.grey)
         p.drawString(55, y + 24, "Secure payment via link")
 
-        # Button
+        # Button background
         p.setFillColor(colors.HexColor("#2563EB"))
         p.roundRect(width - 170, y + 18, 110, 24, 6, fill=1, stroke=0)
 
@@ -311,10 +287,10 @@ def draw_summary(p, invoice, subtotal, y, width):
         p.setFont("Helvetica-Bold", 10)
         p.drawCentredString(width - 115, y + 25, "Pay Now")
 
-        # Clickable area
+        # Clickable Area
         p.linkURL(payment_link, (width - 170, y + 18, width - 60, y + 42), relative=0)
 
-        # Short link preview (clean trust signal)
+        # Clean short link preview
         short_link = payment_link.replace("https://", "").replace("http://", "")
         if len(short_link) > 35:
             short_link = short_link[:35] + "..."
@@ -322,17 +298,6 @@ def draw_summary(p, invoice, subtotal, y, width):
         p.setFont("Helvetica", 7)
         p.setFillColor(colors.grey)
         p.drawString(55, y + 10, short_link)
-      
-
-
-
-# Show actual URL (optional but better UX)
-
-
-# Make link clickable
-
-
-# Show text
 
 
 # ===============================
