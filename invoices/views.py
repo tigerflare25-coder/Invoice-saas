@@ -194,13 +194,47 @@ from reportlab.lib.utils import ImageReader
 def draw_summary(p, invoice, subtotal, y, width):
     y -= 20
 
+    # Helper function to sketch a crisp vector Rupee symbol
+    def draw_vector_rupee(canvas_obj, x_pos, y_pos, font_size):
+        canvas_obj.saveState()
+        canvas_obj.setStrokeColor(canvas_obj._fillColor) # Match current text color
+        
+        # Scaling dimensions based on text size
+        scale = font_size / 10.0
+        w = 6 * scale
+        h = 8 * scale
+        
+        canvas_obj.setLineWidth(1.1 * scale)
+        canvas_obj.setLineCap(1) # Rounded edges
+        
+        # 1. Main vertical stem and loop curve
+        path = canvas_obj.beginPath()
+        path.moveTo(x_pos, y_pos + h)
+        path.lineTo(x_pos + w, y_pos + h) # Top bar extension
+        path.moveTo(x_pos, y_pos + h/2)
+        path.lineTo(x_pos + w, y_pos + h/2) # Middle bar extension
+        canvas_obj.drawPath(path, stroke=1, fill=0)
+        
+        # Draw the loop right side curve
+        canvas_obj.arc(x_pos, y_pos + h/2, x_pos + w, y_pos + h, startAng=90, extent=-180)
+        
+        # 2. Diagonal leg drop
+        canvas_obj.line(x_pos + w/3, y_pos + h/2, x_pos + w, y_pos)
+        
+        canvas_obj.restoreState()
+
     # 1. Subtotal
     p.setFont("Helvetica", 10)
     p.setFillColor(colors.black)
     p.drawString(350, y, "Subtotal:")
     
-    # Render the native Indian Rupee string character using raw unicode formatting
-    p.drawRightString(width - 50, y, f"\u20B9 {subtotal:.2f}")
+    # Calculate text width dynamically to position our vector symbol perfectly inline
+    val_str = f"{subtotal:.2f}"
+    val_width = p.stringWidth(val_str, "Helvetica", 10)
+    
+    # Draw vector icon, then the numbers
+    draw_vector_rupee(p, width - 62 - val_width, y, 10)
+    p.drawRightString(width - 50, y, val_str)
 
     total = subtotal
 
@@ -214,8 +248,11 @@ def draw_summary(p, invoice, subtotal, y, width):
         p.setFont("Helvetica", 10)
         p.drawString(350, y, f"Tax ({invoice.tax_percentage}%):")
         
-        p.setFillColor(colors.grey)
-        p.drawRightString(width - 50, y, f"\u20B9 {tax:.2f}")
+        tax_str = f"{tax:.2f}"
+        tax_width = p.stringWidth(tax_str, "Helvetica", 10)
+        
+        draw_vector_rupee(p, width - 62 - tax_width, y, 10)
+        p.drawRightString(width - 50, y, tax_str)
 
     y -= 25
 
@@ -224,9 +261,12 @@ def draw_summary(p, invoice, subtotal, y, width):
     p.setFont("Helvetica-Bold", 14)
     p.drawString(350, y, "TOTAL")
     
-    p.drawRightString(width - 50, y, f"\u20B9 {total:.2f}")
-
-    # ... (rest of your payment section remains exactly the same)
+    total_str = f"{total:.2f}"
+    total_width = p.stringWidth(total_str, "Helvetica-Bold", 14)
+    
+    # Draw slightly larger vector icon for the bold total row
+    draw_vector_rupee(p, width - 66 - total_width, y + 1, 14)
+    p.drawRightString(width - 50, y, total_str)
 
     # ... (rest of your payment section remains exactly the same)
 
