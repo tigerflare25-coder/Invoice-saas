@@ -15,11 +15,18 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
-# 1. Register the font (Do this at the top of your file or in AppConfig ready())
-pdfmetrics.registerFont(TTFont('DejaVuSans', 'path/to/DejaVuSans.ttf'))
-pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'path/to/DejaVuSans-Bold.ttf'))
+
 
 from .models import Invoice, InvoiceItem
+FONT_PATH = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'DejaVuSans.ttf')
+BOLD_FONT_PATH = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'DejaVuSans-Bold.ttf')
+
+try:
+    pdfmetrics.registerFont(TTFont('DejaVuSans', FONT_PATH))
+    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', BOLD_FONT_PATH))
+except Exception as e:
+    # Fallback to standard Helvetica if something goes wrong during deployment
+    print(f"Font registration failed: {e}")
 
 
 # ===============================
