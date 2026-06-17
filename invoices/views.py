@@ -4,6 +4,11 @@ from decimal import Decimal
 from datetime import date
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from decimal import Decimal
+from reportlab.lib import colors
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_RIGHT
 import os
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
@@ -194,55 +199,84 @@ def draw_items(p, items, width, height):
 
     return subtotal, y
 
+from decimal import Decimal
+from reportlab.lib import colors
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_RIGHT
+
 def draw_summary(p, invoice, subtotal, y, width):
     y -= 20
 
+    # Initialize styles safely
+    styles = getSampleStyleSheet()
+    
+    # Custom styles to avoid conflict names
+    style_normal = ParagraphStyle(
+        'CurrencyNormal',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=10,
+        alignment=TA_RIGHT,
+        textColor=colors.black
+    )
+    
+    style_grey = ParagraphStyle(
+        'CurrencyGrey',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=10,
+        alignment=TA_RIGHT,
+        textColor=colors.grey
+    )
+    
+    style_bold = ParagraphStyle(
+        'CurrencyBold',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=14,
+        alignment=TA_RIGHT,
+        textColor=colors.black
+    )
+
+    # 1. Subtotal Label & Value
     p.setFont("Helvetica", 10)
     p.setFillColor(colors.black)
     p.drawString(350, y, "Subtotal:")
     
-    # Draw the currency symbol safely
-    if UNICODE_READY:
-        p.setFont("HeiseiMin-W3", 10)
-        p.drawRightString(width - 90, y, "₹")
-        p.setFont("Helvetica", 10)
-        p.drawRightString(width - 50, y, f"{subtotal:.2f}")
-    else:
-        p.drawRightString(width - 50, y, f"Rs. {subtotal:.2f}")
+    # Uses HTML Entity for the Rupee symbol inside standard Helvetica flowable
+    subtotal_text = f"&#8377; {subtotal:.2f}"
+    subtotal_para = Paragraph(subtotal_text, style_normal)
+    subtotal_para.wrap(200, 20)
+    subtotal_para.drawOn(p, width - 240, y)
 
     total = subtotal
 
+    # 2. Tax Label & Value
     if invoice.tax_percentage:
         tax = (subtotal * Decimal(str(invoice.tax_percentage))) / 100
         total += tax
         y -= 18
 
         p.setFillColor(colors.grey)
-        p.setFont("Helvetica", 10)
         p.drawString(350, y, f"Tax ({invoice.tax_percentage}%):")
         
-        if UNICODE_READY:
-            p.setFont("HeiseiMin-W3", 10)
-            p.drawRightString(width - 90, y, "₹")
-            p.setFont("Helvetica", 10)
-            p.drawRightString(width - 50, y, f"{tax:.2f}")
-        else:
-            p.drawRightString(width - 50, y, f"Rs. {tax:.2f}")
+        tax_text = f"&#8377; {tax:.2f}"
+        tax_para = Paragraph(tax_text, style_grey)
+        tax_para.wrap(200, 20)
+        tax_para.drawOn(p, width - 240, y)
 
     y -= 25
 
-    # TOTAL (highlight)
+    # 3. TOTAL Label & Value
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 14)
     p.drawString(350, y, "TOTAL")
     
-    if UNICODE_READY:
-        p.setFont("HeiseiMin-W3", 14)
-        p.drawRightString(width - 100, y, "₹")
-        p.setFont("Helvetica-Bold", 14)
-        p.drawRightString(width - 50, y, f"{total:.2f}")
-    else:
-        p.drawRightString(width - 50, y, f"Rs. {total:.2f}")
+    total_text = f"&#8377; {total:.2f}"
+    total_para = Paragraph(total_text, style_bold)
+    total_para.wrap(200, 25)
+    total_para.drawOn(p, width - 240, y - 4)
 
     # ... (rest of your payment section remains the same)
 
