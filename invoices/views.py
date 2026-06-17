@@ -13,6 +13,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
+# 1. Register the font (Do this at the top of your file or in AppConfig ready())
+pdfmetrics.registerFont(TTFont('DejaVuSans', 'path/to/DejaVuSans.ttf'))
+pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'path/to/DejaVuSans-Bold.ttf'))
 
 from .models import Invoice, InvoiceItem
 
@@ -185,7 +188,7 @@ def draw_summary(p, invoice, subtotal, y, width):
     # ─────────────────────────────
     # 💰 SUMMARY (RIGHT SIDE)
     # ─────────────────────────────
-    p.setFont("Helvetica", 10)
+    p.setFont("DejaVuSans", 10)
     p.setFillColor(colors.black)
 
     p.drawString(350, y, "Subtotal:")
@@ -206,7 +209,7 @@ def draw_summary(p, invoice, subtotal, y, width):
 
     # TOTAL (highlight)
     p.setFillColor(colors.black)
-    p.setFont("Helvetica-Bold", 14)
+    p.setFont("DejaVuSans-Bold", 14)
     p.drawString(350, y, "TOTAL")
     p.drawRightString(width - 50, y, f"₹ {total:.2f}")
 
