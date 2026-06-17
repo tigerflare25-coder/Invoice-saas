@@ -195,14 +195,17 @@ def draw_items(p, items, width, height):
 def draw_summary(p, invoice, subtotal, y, width):
     y -= 20
 
-    # ─────────────────────────────
-    # 💰 SUMMARY (RIGHT SIDE)
-    # ─────────────────────────────
-    p.setFont("DejaVuSans", 10)
+    # Check if our custom font was successfully registered, otherwise fall back
+    regular_font = "DejaVuSans" if "DejaVuSans" in p.getAvailableFonts() else "Helvetica"
+    bold_font = "DejaVuSans-Bold" if "DejaVuSans-Bold" in p.getAvailableFonts() else "Helvetica-Bold"
+
+    p.setFont(regular_font, 10)
     p.setFillColor(colors.black)
 
     p.drawString(350, y, "Subtotal:")
-    p.drawRightString(width - 50, y, f"₹ {subtotal:.2f}")
+    # If using Helvetica, use 'Rs.', otherwise use '₹'
+    currency_symbol = "₹" if regular_font == "DejaVuSans" else "Rs."
+    p.drawRightString(width - 50, y, f"{currency_symbol} {subtotal:.2f}")
 
     total = subtotal
 
@@ -213,15 +216,17 @@ def draw_summary(p, invoice, subtotal, y, width):
 
         p.setFillColor(colors.grey)
         p.drawString(350, y, f"Tax ({invoice.tax_percentage}%):")
-        p.drawRightString(width - 50, y, f"₹ {tax:.2f}")
+        p.drawRightString(width - 50, y, f"{currency_symbol} {tax:.2f}")
 
     y -= 25
 
     # TOTAL (highlight)
     p.setFillColor(colors.black)
-    p.setFont("DejaVuSans-Bold", 14)
+    p.setFont(bold_font, 14)
     p.drawString(350, y, "TOTAL")
-    p.drawRightString(width - 50, y, f"₹ {total:.2f}")
+    p.drawRightString(width - 50, y, f"{currency_symbol} {total:.2f}")
+
+    # ... (rest of your payment section remains the same)
 
     # ─────────────────────────────
     # 💳 PAYMENT SECTION (LEFT SIDE)
