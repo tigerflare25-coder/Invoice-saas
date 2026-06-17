@@ -11,6 +11,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 import io
 import urllib.request
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.cidfonts import CIDFont
 
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
@@ -21,24 +23,15 @@ from reportlab.lib.styles import getSampleStyleSheet
 
 
 from .models import Invoice, InvoiceItem
-# URLs to the official raw binary font files on Google's repository
-REGULAR_FONT_URL = "https://github.com/googlefonts/dejavu-fonts/raw/master/resources/DejaVuSans.ttf"
-BOLD_FONT_URL = "https://github.com/googlefonts/dejavu-fonts/raw/master/resources/DejaVuSans-Bold.ttf"
-
 try:
-    # Fetch Regular Font into memory
-    with urllib.request.urlopen(REGULAR_FONT_URL, timeout=10) as response:
-        font_data = io.BytesIO(response.read())
-        pdfmetrics.registerFont(TTFont('DejaVuSans', font_data))
-        
-    # Fetch Bold Font into memory
-    with urllib.request.urlopen(BOLD_FONT_URL, timeout=10) as response:
-        bold_font_data = io.BytesIO(response.read())
-        pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_font_data))
-        
-    print("✅ Rupee fonts registered successfully via remote stream!")
+    # Register ReportLab's built-in universal Unicode/Multi-byte layout
+    pdfmetrics.registerFont(CIDFont('HeiseiMin-W3', 'EUC-H'))
+    # This acts as a global system flag letting our draw function know it's safe to use Unicode
+    UNICODE_READY = True
+    print("✅ Universal Unicode engine mapped successfully!")
 except Exception as e:
-    print(f"❌ Remote font registration failed: {e}. Falling back to Rs.")
+    UNICODE_READY = False
+    print(f"❌ Unicode registration skipped: {e}")
 
 # ===============================
 # DASHBOARD
@@ -201,21 +194,21 @@ def draw_items(p, items, width, height):
 
     return subtotal, y
 
-
 def draw_summary(p, invoice, subtotal, y, width):
     y -= 20
 
-    # Check if our custom font was successfully registered, otherwise fall back
-    regular_font = "DejaVuSans" if "DejaVuSans" in p.getAvailableFonts() else "Helvetica"
-    bold_font = "DejaVuSans-Bold" if "DejaVuSans-Bold" in p.getAvailableFonts() else "Helvetica-Bold"
-
-    p.setFont(regular_font, 10)
+    p.setFont("Helvetica", 10)
     p.setFillColor(colors.black)
-
     p.drawString(350, y, "Subtotal:")
-    # If using Helvetica, use 'Rs.', otherwise use '₹'
-    currency_symbol = "₹" if regular_font == "DejaVuSans" else "Rs."
-    p.drawRightString(width - 50, y, f"{currency_symbol} {subtotal:.2f}")
+    
+    # Draw the currency symbol safely
+    if UNICODE_READY:
+        p.setFont("HeiseiMin-W3", 10)
+        p.drawRightString(width - 90, y, "₹")
+        p.setFont("Helvetica", 10)
+        p.drawRightString(width - 50, y, f"{subtotal:.2f}")
+    else:
+        p.drawRightString(width - 50, y, f"Rs. {subtotal:.2f}")
 
     total = subtotal
 
@@ -225,16 +218,31 @@ def draw_summary(p, invoice, subtotal, y, width):
         y -= 18
 
         p.setFillColor(colors.grey)
+        p.setFont("Helvetica", 10)
         p.drawString(350, y, f"Tax ({invoice.tax_percentage}%):")
-        p.drawRightString(width - 50, y, f"{currency_symbol} {tax:.2f}")
+        
+        if UNICODE_READY:
+            p.setFont("HeiseiMin-W3", 10)
+            p.drawRightString(width - 90, y, "₹")
+            p.setFont("Helvetica", 10)
+            p.drawRightString(width - 50, y, f"{tax:.2f}")
+        else:
+            p.drawRightString(width - 50, y, f"Rs. {tax:.2f}")
 
     y -= 25
 
     # TOTAL (highlight)
     p.setFillColor(colors.black)
-    p.setFont(bold_font, 14)
+    p.setFont("Helvetica-Bold", 14)
     p.drawString(350, y, "TOTAL")
-    p.drawRightString(width - 50, y, f"{currency_symbol} {total:.2f}")
+    
+    if UNICODE_READY:
+        p.setFont("HeiseiMin-W3", 14)
+        p.drawRightString(width - 100, y, "₹")
+        p.setFont("Helvetica-Bold", 14)
+        p.drawRightString(width - 50, y, f"{total:.2f}")
+    else:
+        p.drawRightString(width - 50, y, f"Rs. {total:.2f}")
 
     # ... (rest of your payment section remains the same)
 
