@@ -9,6 +9,8 @@ from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+import io
+import urllib.request
 
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
@@ -19,16 +21,24 @@ from reportlab.lib.styles import getSampleStyleSheet
 
 
 from .models import Invoice, InvoiceItem
-FONT_PATH = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'DejaVuSans.ttf')
-BOLD_FONT_PATH = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'DejaVuSans-Bold.ttf')
+# URLs to the official raw binary font files on Google's repository
+REGULAR_FONT_URL = "https://github.com/googlefonts/dejavu-fonts/raw/master/resources/DejaVuSans.ttf"
+BOLD_FONT_URL = "https://github.com/googlefonts/dejavu-fonts/raw/master/resources/DejaVuSans-Bold.ttf"
 
 try:
-    pdfmetrics.registerFont(TTFont('DejaVuSans', FONT_PATH))
-    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', BOLD_FONT_PATH))
+    # Fetch Regular Font into memory
+    with urllib.request.urlopen(REGULAR_FONT_URL, timeout=10) as response:
+        font_data = io.BytesIO(response.read())
+        pdfmetrics.registerFont(TTFont('DejaVuSans', font_data))
+        
+    # Fetch Bold Font into memory
+    with urllib.request.urlopen(BOLD_FONT_URL, timeout=10) as response:
+        bold_font_data = io.BytesIO(response.read())
+        pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_font_data))
+        
+    print("✅ Rupee fonts registered successfully via remote stream!")
 except Exception as e:
-    # Fallback to standard Helvetica if something goes wrong during deployment
-    print(f"Font registration failed: {e}")
-
+    print(f"❌ Remote font registration failed: {e}. Falling back to Rs.")
 
 # ===============================
 # DASHBOARD
