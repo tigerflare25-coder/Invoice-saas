@@ -194,31 +194,17 @@ from reportlab.lib.utils import ImageReader
 def draw_summary(p, invoice, subtotal, y, width):
     y -= 20
 
-    # 1. Grab a clean, crisp transparent PNG of the Rupee icon 
-    # (Using a reliable open-source asset repository)
-    RUPEE_ICON_URL = "https://raw.githubusercontent.com/bndw/wifi-card/master/src/assets/rupee.png"
-    
-    try:
-        res = requests.get(RUPEE_ICON_URL, timeout=5)
-        rupee_img = ImageReader(BytesIO(res.content))
-    except Exception:
-        rupee_img = None
-
-    # 2. Subtotal
+    # 1. Subtotal
     p.setFont("Helvetica", 10)
     p.setFillColor(colors.black)
     p.drawString(350, y, "Subtotal:")
     
-    if rupee_img:
-        # Place the Rupee symbol exactly at the proper height relative to text line
-        p.drawImage(rupee_img, width - 115, y - 1, width=8, height=10, mask='auto')
-        p.drawRightString(width - 50, y, f"{subtotal:.2f}")
-    else:
-        p.drawRightString(width - 50, y, f"Rs. {subtotal:.2f}")
+    # Render the native Indian Rupee string character using raw unicode formatting
+    p.drawRightString(width - 50, y, f"\u20B9 {subtotal:.2f}")
 
     total = subtotal
 
-    # 3. Tax
+    # 2. Tax
     if invoice.tax_percentage:
         tax = (subtotal * Decimal(str(invoice.tax_percentage))) / 100
         total += tax
@@ -228,25 +214,19 @@ def draw_summary(p, invoice, subtotal, y, width):
         p.setFont("Helvetica", 10)
         p.drawString(350, y, f"Tax ({invoice.tax_percentage}%):")
         
-        if rupee_img:
-            p.drawImage(rupee_img, width - 115, y - 1, width=8, height=10, mask='auto')
-            p.drawRightString(width - 50, y, f"{tax:.2f}")
-        else:
-            p.drawRightString(width - 50, y, f"Rs. {tax:.2f}")
+        p.setFillColor(colors.grey)
+        p.drawRightString(width - 50, y, f"\u20B9 {tax:.2f}")
 
     y -= 25
 
-    # 4. TOTAL
+    # 3. TOTAL
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 14)
     p.drawString(350, y, "TOTAL")
     
-    if rupee_img:
-        # Slightly scaled up layout for the bolded section total
-        p.drawImage(rupee_img, width - 125, y - 1, width=10, height=13, mask='auto')
-        p.drawRightString(width - 50, y, f"{total:.2f}")
-    else:
-        p.drawRightString(width - 50, y, f"Rs. {total:.2f}")
+    p.drawRightString(width - 50, y, f"\u20B9 {total:.2f}")
+
+    # ... (rest of your payment section remains exactly the same)
 
     # ... (rest of your payment section remains exactly the same)
 
