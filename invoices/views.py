@@ -2,6 +2,8 @@ import requests
 from io import BytesIO
 from decimal import Decimal
 from datetime import date
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
